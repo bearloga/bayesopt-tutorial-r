@@ -1,1 +1,1 @@
-# bayesopt-tutorial-r
+# \[WIP\] Tutorial on Bayesian optimization in R
