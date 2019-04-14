@@ -1,0 +1,76 @@
+---
+title: "A tutorial on Bayesian optimization in R"
+description: |
+  A step-by-step demonstration of Bayesian optimization with Gaussian Process and different acquisition functions.
+author:
+  - name: Mikhail Popov
+    url: https://mpopov.com
+date: "`r Sys.Date()`"
+bibliography: bibliography.bib
+nocite: |
+  @r-animation
+output:
+  distill::distill_article:
+    toc: false
+    toc_depth: 2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+```{js}
+<script src="https://unpkg.com/context-cards/dist/context-cards.js"></script>
+```
+
+# Introduction
+
+<a href="#" data-wiki-lang='en' data-wiki-title='Mathematical_optimization'>Optimization</a> of function $f$ is finding an input value $\mathbf{x}_*$ which minimizes (or maximizes) the output value:
+
+$$
+\mathbf{x}_* = \underset{\mathbf{x}}{\arg\min}~f(\mathbf{x})
+$$
+
+In this tutorial we will optimize $f(x) = (6(x-2)^2)~\text{sin}(12x-4)$^[from [documentation for Pyro](http://pyro.ai/examples/bo.html)], which looks like this when $x \in [0, 1]$:
+
+```{r curve}
+par(mar = c(4.1, 4.1, 0.5, 0.5), cex = 1.1)
+curve((6 * x - 2)**2 * sin(12 * x - 4), 0, 1, xlab = "x", ylab = "f(x)", lwd = 2)
+```
+
+The ideal scenario is that $f$ is known, has a closed, analytical form, and is differentiable -- which would enable us to use gradient descent-based methods. For example, here's how we might optimize it with Adam[@Adam] in TensorFlow[@r-tf]:
+
+```{r tf, echo=TRUE, eval=FALSE}
+library(tensorflow)
+sess = tf$Session()
+
+x <- tf$Variable(0.0, trainable = TRUE)
+f <- function(x) (6 * x - 2)**2 * tf$sin(12 * x - 4)
+
+adam <- tf$train$AdamOptimizer(learning_rate = 0.3)
+opt <- adam$minimize(f(x), var_list = x)
+
+sess$run(tf$global_variables_initializer())
+
+for (i in 1:20) sess$run(opt)
+# x_best <- sess$run(x)
+```
+
+![Optimization using Adam in TensorFlow](images/tf_adam.gif)
+
+But that's not always the case. Maybe we don't have a derivative to work with, or maybe the evaluation of the function is expensive -- hours to train a model or weeks to do an A/B test. That's where we
+
+# Dependencies
+
+We will use the **GPfit**[@r-GPfit] package in R[@r-base] to fit a Gaussian process in each iteration of the algorithm and obtain the posterior necessary for the acquisition functions.
+
+```{r deps, echo=TRUE}
+library(GPfit) # install.packages("GPfit")
+```
+
+# Further reading
+
+- [@Snoek2012vl] explains how BayesOpt may be used for automatic parameter tuning in machine learning
+- [@Frazier2018id] is a more in-depth, conceptual tutorial
+- [@Shahriari2016je] provides a comprehensive review of the algorithm and its applications
+- [@Letham2018ep] shows how Facebook uses BayesOpt to find next set of parameter values to evaluate with online experiments (A/B tests)
+- [@Gortler2019a] is a visual exploration of Gaussian processes
