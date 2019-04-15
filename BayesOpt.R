@@ -6,7 +6,7 @@ library(animation)
 
 # Goal: find x and y which maximize f
 f <- function(x) {
-  return((6 * x - 2)**2 * sin(12 * x - 4))
+  return((6 * x - 2)^2 * sin(12 * x - 4))
 }
 
 c(max_evals, seed_evals) %<-% c(8, 4)
@@ -22,10 +22,10 @@ evaluations <- matrix(
   dimnames = list(NULL, c("x", "y"))
 )
 # seed with a few evaluations:
-set.seed(0)
 evaluations[1:seed_evals, "x"] <- seq(0, 1, length.out = seed_evals)
 evaluations[1:seed_evals, "y"] <- f(evaluations[1:seed_evals, "x"])
 
+set.seed(0)
 bayesian_optimize <- function(optmize_function, init_evals, max_iter, acquisition_function, minimize = TRUE, control = NULL) {
   # expand to hold additional evaluations:
   evaluations <- rbind(init_evals, matrix(
@@ -131,7 +131,7 @@ bayesian_optimize <- function(optmize_function, init_evals, max_iter, acquisitio
 # Visualize | mar = c(5.1, 4.1, 4.1, 2.1) (bottom, left, top, right)
 purrr::walk(c("poi", "ei", "cb"), function(af) {
   # Static images:
-  png(glue("images/bayesopt_{af}.png"), width = 12, height = 12, units = "in", res = 300)
+  png(glue("bayesopt_{af}.png"), width = 12, height = 12, units = "in", res = 300)
   par(mfrow = c(4, 2), mar = c(4.1, 4.1, 0.5, 0.5), cex = 1.1)
   bayesian_optimize(f, evaluations, max_evals - seed_evals, af)
   dev.off()
@@ -141,7 +141,7 @@ purrr::walk(c("poi", "ei", "cb"), function(af) {
       par(mfrow = c(1, 2), mar = c(4.1, 4.1, 0.5, 0.5), cex = 1.1)
       bayesian_optimize(f, evaluations, max_evals - seed_evals, af)
     },
-    glue("images/bayesopt_{af}.gif"), nmax = 4, loop = TRUE, interval = 1.5,
+    glue("bayesopt_{af}.gif"), nmax = 4, loop = TRUE, interval = 1.5,
     ani.width = 900, ani.height = 300, ani.dev = "png",
     autobrowse = FALSE
   )
