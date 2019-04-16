@@ -73,7 +73,7 @@ for (i in 1:20) sess$run(opt)
 
 ![Optimization using Adam in TensorFlow](images/tf_adam.gif)
 
-But that's not always the case. Maybe we don't have a derivative to work with and the evaluation of the function is expensive -- hours to train a model or weeks to do an A/B test. Bayesian optimization (BayesOpt) is one algorithm that helps us perform derivative-free optimization of black-box functions.
+But that's not always the case. Maybe we don't have a derivative to work with and the evaluation of the function is expensive -- hours to train a model or weeks to do an A/B test. <a href="https://en.wikipedia.org/wiki/Bayesian_optimization" class='wiki-preview' data-wiki-lang='en' data-wiki-title='Bayesian optimization'>Bayesian optimization</a> (BayesOpt) is one algorithm that helps us perform <a href="https://en.wikipedia.org/wiki/Derivativve-free_optimization" class='wiki-preview' data-wiki-lang='en' data-wiki-title='Derivative-free optimization'>derivative-free optimization</a> of black-box functions.
 
 # Algorithm
 
@@ -106,7 +106,7 @@ In the sections below, each acquisition function will be formally introduced and
 
 # Implementation
 
-We will use the **GPfit**[@r-GPfit] package for working with Gaussian processes.
+We will use the **GPfit**[@r-GPfit] package for working with <a href="https://en.wikipedia.org/wiki/Gaussian_process" class='wiki-preview' data-wiki-lang='en' data-wiki-title='Gaussian process'>Gaussian processes</a>.
 
 ```{r deps, echo=TRUE}
 library(GPfit) # install.packages("GPfit")
@@ -298,5 +298,5 @@ This was only a one-dimensional optimization example to show the key ideas and h
 - [@Snoek2012vl] explains how BayesOpt may be used for automatic parameter tuning in machine learning
 - [@Shahriari2016je] provides a comprehensive review of the algorithm and its applications
 - [@Letham2018ep] shows how Facebook uses BayesOpt to find next set of parameter values to evaluate with online experiments (A/B tests)
-- [@Chen2018ta] shows how DeepMind used BayesOpt to tune AlphaGo during development
+- [@Chen2018ta] shows how DeepMind used BayesOpt to tune <a href="https://en.wikipedia.org/wiki/AlphaGo" class='wiki-preview' data-wiki-lang='en' data-wiki-title='AlphaGo'>AlphaGo</a> during development
 - [@Gortler2019a] is a visual exploration of Gaussian processes
