@@ -300,3 +300,7 @@ This was only a one-dimensional optimization example to show the key ideas and h
 - [@Letham2018ep] shows how Facebook uses BayesOpt to find next set of parameter values to evaluate with online experiments (A/B tests)
 - [@Chen2018ta] shows how DeepMind used BayesOpt to tune <a href="https://en.wikipedia.org/wiki/AlphaGo" class='wiki-preview' data-wiki-lang='en' data-wiki-title='AlphaGo'>AlphaGo</a> during development
 - [@Gortler2019a] is a visual exploration of Gaussian processes
+
+# Acknowledgements {.appendix}
+
+You might have noticed a few blue links with "W"s on this page. Those are links to the Wikipedia articles on those topics and if you hover over them, you will see a preview of the article. This is possible with the [ContextCards library](https://chimeces.com/context-cards/) developed by my coworker Joaquin over at Wikimedia, based on the [Popups extension for MediaWiki](https://www.mediawiki.org/wiki/Extension:Popups).
