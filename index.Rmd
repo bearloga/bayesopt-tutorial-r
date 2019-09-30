@@ -5,7 +5,7 @@ description: |
 author:
   - name: Mikhail Popov
     url: https://mpopov.com
-date: "`r Sys.Date()`"
+date: 2019-05-19
 bibliography: bibliography.bib
 repository_url: https://github.com/bearloga/bayesopt-tutorial-r
 creative_commons: CC BY-ND
@@ -293,13 +293,24 @@ Using this acquisition function, the next point which should be evaluated is `x_
 
 This was only a one-dimensional optimization example to show the key ideas and how one might implement them. If you are interested in using this algorithm to tune your models' parameters, I encourage you to check out [this documentation](http://pyro.ai/examples/bo.html) which describes how to perform Bayesian optimization with [Pyro](http://pyro.ai/) (the probabilistic programming language built on [PyTorch](https://pytorch.org/)); and [pyGPGO](https://pygpgo.readthedocs.io/en/latest/), which is a Bayesian optimization library for Python.
 
+
+
 # Further reading
 
 - [@Snoek2012vl] explains how BayesOpt may be used for automatic parameter tuning in machine learning
 - [@Shahriari2016je] provides a comprehensive review of the algorithm and its applications
-- [@Letham2018ep] shows how Facebook uses BayesOpt to find next set of parameter values to evaluate with online experiments (A/B tests)
 - [@Chen2018ta] shows how DeepMind used BayesOpt to tune <a href="https://en.wikipedia.org/wiki/AlphaGo" class='wiki-preview' data-wiki-lang='en' data-wiki-title='AlphaGo'>AlphaGo</a> during development
-- [@Gortler2019a] is a visual exploration of Gaussian processes
+- **Gaussian processes**
+  - [@Gortler2019a] is a visual exploration of Gaussian processes
+  - [@Shi2019] is  GP and covariance matrices
+  - [@Zhu2019] is a walkthrough on implementing GP in R and Python
+- [@Letham2018ep] shows how Facebook uses BayesOpt to find next set of parameter values to evaluate with online experiments (A/B tests)
+
+**_Update 2019-09-30_**: not long after I published this tutorial, Facebook open-sourced PyTorch-based [BoTorch](https://www.botorch.org/) and "adaptive experimentation platform" [Ax](https://ax.dev/). See [@Fb2019] for more details.
+
+<aside>
+BoTorch uses [GPyTorch](https://gpytorch.ai/) for Gaussian process modeling with GPU support.
+</aside>
 
 # Acknowledgements {.appendix}
 
