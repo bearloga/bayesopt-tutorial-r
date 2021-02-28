@@ -147,33 +147,39 @@ purrr::walk(c("poi", "ei", "cb"), function(af) {
   )
 })
 
-# Optimization with gradient descent in TensorFlow:
-library(tensorflow)
+# Optimization with gradient descent in {torch}:
+library(torch)
 library(animation)
-sess = tf$Session()
-
-x <- tf$Variable(0.0, trainable = TRUE)
-f <- function(x) (6 * x - 2)**2 * tf$sin(12 * x - 4)
-
-adam <- tf$train$AdamOptimizer(learning_rate = 0.3)
-
-f_x <- f(x)
-opt <- adam$minimize(f_x, var_list = x)
-sess$run(tf$global_variables_initializer())
 
 saveGIF(
   {
+    x <- torch_zeros(1, requires_grad = TRUE)
+    f <- function(x) (6 * x - 2)^2 * torch_sin(12 * x - 4)
+
+    optimizer <- optim_adam(x, lr = 0.25)
+
     par(mfrow = c(1, 1), mar = c(4.1, 4.1, 0.5, 0.5), cex = 2)
-    for (i in 1:20) {
-      sess$run(opt)
-      curve((6 * x - 2)**2 * sin(12 * x - 4), 0, 1, xlab = "x", ylab = "f(x)", lwd = 2)
-      x_best <- sess$run(x)
-      y_best <- sess$run(f_x)
-      points(x_best, y_best, cex = 2, col = "red", pch = 16)
-      points(x_best, y_best, cex = 2, col = "black", lwd = 2)
+    for (i in 1:50) {
+
+      curve(
+        (6 * x - 2)^2 * sin(12 * x - 4),
+        from = 0, to = 1,
+        xlab = "x", ylab = "f(x)", lwd = 2
+      )
+
+      loss <- f(x)
+
+      y <- as.numeric(loss)
+      points(as.numeric(x), y, cex = 2, col = "red", pch = 16)
+      points(as.numeric(x), y, cex = 2, col = "black", lwd = 2)
+
+      optimizer$zero_grad()
+      loss$backward()
+      optimizer$step()
     }
   },
-  "tf_adam.gif", nmax = 20, loop = TRUE, interval = 0.3,
+  "torch_adam.gif",
+  loop = TRUE, autobrowse = FALSE,
   ani.width = 900, ani.height = 600, ani.dev = "png",
-  autobrowse = FALSE
+  interval = 0.2
 )

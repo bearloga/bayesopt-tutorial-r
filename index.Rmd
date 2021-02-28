@@ -17,9 +17,14 @@ output:
 
 ```{r setup, include=FALSE}
 library(knitr)
-library(kableExtra)
-opts_chunk$set(echo = FALSE)
-library(magrittr)
+opts_chunk$set(
+  echo = FALSE,
+  dev = "svg"
+)
+```
+```{r packages}
+library(purrr)
+library(gt)
 ```
 ```{css}
 a.wiki-preview {
@@ -50,28 +55,32 @@ In this tutorial we will optimize $f(x) = (6x-2)^2~\text{sin}(12x-4)$[@Forrester
 
 ```{r curve}
 par(mar = c(4.1, 4.1, 0.5, 0.5), cex = 1.1)
-curve((6 * x - 2)^2 * sin(12 * x - 4), 0, 1, xlab = "x", ylab = "f(x)", lwd = 2)
+curve(
+  (6 * x - 2)^2 * sin(12 * x - 4),
+  from = 0, to = 1,
+  xlab = "x", ylab = "f(x)", lwd = 2
+)
 ```
 
-The ideal scenario is that $f$ is known, has a closed, analytical form, and is <a href="https://en.wikipedia.org/wiki/Differentiable_function" class='wiki-preview' data-wiki-lang='en' data-wiki-title='Differentiable function'>differentiable</a> -- which would enable us to use <a href="https://en.wikipedia.org/wiki/Gradient_descent" class='wiki-preview' data-wiki-lang='en' data-wiki-title='Gradient descent'>gradient descent</a>-based algorithms For example, here's how we might optimize it with Adam[@Adam] in TensorFlow[@r-tf]:
+The ideal scenario is that $f$ is known, has a closed, analytical form, and is <a href="https://en.wikipedia.org/wiki/Differentiable_function" class='wiki-preview' data-wiki-lang='en' data-wiki-title='Differentiable function'>differentiable</a> -- which would enable us to use <a href="https://en.wikipedia.org/wiki/Gradient_descent" class='wiki-preview' data-wiki-lang='en' data-wiki-title='Gradient descent'>gradient descent</a>-based algorithms For example, here's how we might optimize it with Adam[@Adam] in {torch}[@r-torch]:
 
-```{r tf, echo=TRUE, eval=FALSE}
-library(tensorflow)
-sess = tf$Session()
+```{r torch, eval=FALSE, echo=TRUE}
+library(torch)
 
-x <- tf$Variable(0.0, trainable = TRUE)
-f <- function(x) (6 * x - 2)^2 * tf$sin(12 * x - 4)
+x <- torch_zeros(1, requires_grad = TRUE)
+f <- function(x) (6 * x - 2) ^ 2 * torch_sin(12 * x - 4)
 
-adam <- tf$train$AdamOptimizer(learning_rate = 0.3)
-opt <- adam$minimize(f(x), var_list = x)
+optimizer <- optim_adam(x, lr = 0.25)
 
-sess$run(tf$global_variables_initializer())
-
-for (i in 1:20) sess$run(opt)
-# x_best <- sess$run(x)
+for (i in 1:50) {
+  y <- f(x)
+  optimizer$zero_grad()
+  y$backward()
+  optimizer$step()
+}
 ```
 
-![Optimization using Adam in TensorFlow](images/tf_adam.gif)
+![Optimization using Adam in {torch}](images/torch_adam.gif)
 
 But that's not always the case. Maybe we don't have a derivative to work with and the evaluation of the function is expensive -- hours to train a model or weeks to do an A/B test. <a href="https://en.wikipedia.org/wiki/Bayesian_optimization" class='wiki-preview' data-wiki-lang='en' data-wiki-title='Bayesian optimization'>Bayesian optimization</a> (BayesOpt) is one algorithm that helps us perform <a href="https://en.wikipedia.org/wiki/Derivativve-free_optimization" class='wiki-preview' data-wiki-lang='en' data-wiki-title='Derivative-free optimization'>derivative-free optimization</a> of black-box functions.
 
@@ -139,11 +148,15 @@ evaluations <- matrix(
 )
 evaluations[, "x"] <- seq(0, 1, length.out = n0)
 evaluations[, "y"] <- f(evaluations[, "x"])
+
 evaluations %>%
-  as.data.frame() %>%
-  kable(digits = 3, caption = "Initial evaluations",
-               col.names = c("x", "f(x)")) %>%
-  kable_styling(bootstrap_options = "striped")
+  as.data.frame %>%
+  gt() %>%
+  cols_label(y = "f(x)") %>%
+  fmt_number(vars(x, y), decimals = 3) %>%
+  tab_header(
+    "Initial evaluations"
+  )
 ```
 
 ## GP model fitting
@@ -173,17 +186,26 @@ sigma <- sqrt(pred$MSE)
 
 ```{r, fig.width=8, fig.height=4}
 plot_posterior <- function() {
-  plot(x_new, mu, type = "l", col = "blue", lwd = 2, lty = "dotted", ylim = c(-10, 20),
-       xlab = "x", ylab = "f(x)", main = "Posterior of f")
-  polygon(c(x_new, rev(x_new)), c(mu + sigma, rev(mu - sigma)),
-          col = rgb(0, 0, 1, 0.25), border = NA)
+  plot(
+    x_new, mu,
+    type = "l", col = "blue", lwd = 2, lty = "dotted",
+    ylim = c(-10, 20),
+    xlab = "x", ylab = "f(x)", main = "Posterior of f"
+  )
+  polygon(
+    c(x_new, rev(x_new)),
+    c(mu + sigma, rev(mu - sigma)),
+    col = rgb(0, 0, 1, 0.25), border = NA
+  )
   points(evaluations, pch = 16)
-  legend("topleft",
-         c(expression(f[n[0]]), expression(mu(x)), expression(mu(x) %+-% sigma(x))),
-         col = c("black", "blue", "blue"), pch = c(16, NA, NA),
-         lty = c(NA, "dotted", NA), lwd = c(NA, 2, 1), bty = "n",
-         fill = c(NA, NA, rgb(0, 0, 1, 0.25)),
-         border = c(NA, NA, NA), ncol = 3, text.width = 0.1)
+  legend(
+    "topleft",
+    c(expression(f[n[0]]), expression(mu(x)), expression(mu(x) %+-% sigma(x))),
+    col = c("black", "blue", "blue"), pch = c(16, NA, NA),
+    lty = c(NA, "dotted", NA), lwd = c(NA, 2, 1), bty = "n",
+    fill = c(NA, NA, rgb(0, 0, 1, 0.25)),
+    border = c(NA, NA, NA), ncol = 3, text.width = 0.1
+  )
 }
 par(cex = 1.1, mfrow = c(1, 1), mar = c(5.1, 4.1, 4.1, 2.1))
 plot_posterior()
@@ -208,21 +230,28 @@ $$
 where $\Phi$ is the standard normal cumulative distribution function. In R, it looks like this:
 
 ```{r probability_improvement, echo=TRUE}
-probability_improvement <- purrr::map2_dbl(mu, sigma, function(m, s) {
-  if (s == 0) return(0)
-  else {
-    poi <- pnorm((y_best - m) / s)
-    # poi <- 1 - poi (if maximizing)
-    return(poi)
+probability_improvement <- map2_dbl(
+  mu,
+  sigma,
+  function(m, s) {
+    if (s == 0) return(0)
+    else {
+      poi <- pnorm((y_best - m) / s)
+      # poi <- 1 - poi (if maximizing)
+      return(poi)
+    }
   }
-})
+)
 ```
 
 ```{r, layout="l-body-outset", fig.width=10, fig.height=5}
 par(cex = 1.1, mfrow = c(1, 2))
-plot(x_new, probability_improvement, type = "l", col = "red",
-     ylim = c(0, 1), xlab = "x", ylab = expression("a"["POI"]),
-     main = "Probability of improvement")
+plot(
+  x_new, probability_improvement,
+  type = "l", col = "red",
+  ylim = c(0, 1), xlab = "x", ylab = expression("a"["POI"]),
+  main = "Probability of improvement"
+)
 plot_posterior()
 ```
 
@@ -247,19 +276,25 @@ $$
 In R, it looks like this:
 
 ```{r expected_improvement, echo=TRUE}
-expected_improvement <- purrr::map2_dbl(mu, sigma, function(m, s) {
-  if (s == 0) return(0)
-  gamma <- (y_best - m) / s
-  phi <- pnorm(gamma)
-  return(s * (gamma * phi + dnorm(gamma)))
-})
+expected_improvement <- map2_dbl(
+  mu, sigma,
+  function(m, s) {
+    if (s == 0) return(0)
+    gamma <- (y_best - m) / s
+    phi <- pnorm(gamma)
+    return(s * (gamma * phi + dnorm(gamma)))
+  }
+)
 ```
 
 ```{r, layout="l-body-outset", fig.width=10, fig.height=5}
 par(cex = 1.1, mfrow = c(1, 2))
-plot(x_new, expected_improvement, type = "l", col = "red",
-     xlab = "x", ylab = expression("a"["EI"]),
-     main = "Expected improvement")
+plot(
+  x_new, expected_improvement,
+  type = "l", col = "red",
+  xlab = "x", ylab = expression("a"["EI"]),
+  main = "Expected improvement"
+)
 plot_posterior()
 ```
 
@@ -279,9 +314,12 @@ lower_confidence_bound <- mu - kappa * sigma
 
 ```{r, layout="l-body-outset", fig.width=10, fig.height=5}
 par(cex = 1.1, mfrow = c(1, 2))
-plot(x_new, lower_confidence_bound, type = "l", col = "red",
-     xlab = "x", ylab = expression("a"["LCB"]),
-     main = "GP lower confidence bound")
+plot(
+  x_new, lower_confidence_bound,
+  type = "l", col = "red",
+  xlab = "x", ylab = expression("a"["LCB"]),
+  main = "GP lower confidence bound"
+)
 plot_posterior()
 ```
 
@@ -292,8 +330,6 @@ Using this acquisition function, the next point which should be evaluated is `x_
 # Closing thoughts
 
 This was only a one-dimensional optimization example to show the key ideas and how one might implement them. If you are interested in using this algorithm to tune your models' parameters, I encourage you to check out [this documentation](http://pyro.ai/examples/bo.html) which describes how to perform Bayesian optimization with [Pyro](http://pyro.ai/) (the probabilistic programming language built on [PyTorch](https://pytorch.org/)); and [pyGPGO](https://pygpgo.readthedocs.io/en/latest/), which is a Bayesian optimization library for Python.
-
-
 
 # Further reading
 
@@ -315,3 +351,23 @@ BoTorch uses [GPyTorch](https://gpytorch.ai/) for Gaussian process modeling with
 # Acknowledgements {.appendix}
 
 You might have noticed a few blue links with "W"s on this page. Those are links to the Wikipedia articles on those topics and if you hover over them, you will see a preview of the article. This is possible with the [ContextCards library](https://chimeces.com/context-cards/) developed by my coworker Joaquin over at Wikimedia, based on the [Popups extension for MediaWiki](https://www.mediawiki.org/wiki/Extension:Popups).
+
+# TensorFlow {.appendix}
+
+**_Update 2021-02-28_**: I have migrated the part about optimization from [{tensorflow}](https://tensorflow.rstudio.com/) to [{torch}](https://torch.mlverse.org/). For posterity, the (pre-TensorFlow 2.0.0) code was:
+
+``` r
+library(tensorflow)
+sess = tf$Session()
+
+x <- tf$Variable(0.0, trainable = TRUE)
+f <- function(x) (6 * x - 2)^2 * tf$sin(12 * x - 4)
+
+adam <- tf$train$AdamOptimizer(learning_rate = 0.3)
+opt <- adam$minimize(f(x), var_list = x)
+
+sess$run(tf$global_variables_initializer())
+
+for (i in 1:20) sess$run(opt)
+x_best <- sess$run(x)
+```
